@@ -1,0 +1,184 @@
+/* e107 Quote of the Day (qotd_menu v2.6.0) — Theme-Following Styles */
+.qotd-widget-wrap {
+	position: relative;
+	color: inherit;
+	font-family: inherit;
+	font-size: inherit;
+	line-height: 1.55;
+}
+
+.qotd-widget {
+	margin: 0;
+	padding: 0.15rem 0;
+	color: inherit;
+	transition: opacity 0.18s ease-in-out, transform 0.18s ease-in-out;
+}
+
+.qotd-widget-wrap.is-loading .qotd-widget {
+	opacity: 0.45;
+}
+
+.qotd-pinned-row {
+	margin-bottom: 0.45rem;
+}
+
+.qotd-pinned-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	font-size: 0.72em;
+	font-weight: 600;
+	letter-spacing: 0.03em;
+	text-transform: uppercase;
+	padding: 0.15em 0.55em;
+	border-radius: 999px;
+	background: rgba(245, 158, 11, 0.16);
+	border: 1px solid rgba(245, 158, 11, 0.42);
+	color: inherit;
+}
+
+.qotd-quote-body {
+	position: relative;
+	margin: 0 0 0.65rem 0;
+	padding: 0.35rem 0.2rem 0.35rem 0.85rem;
+	border-left: 3px solid currentColor;
+	border-left-color: color-mix(in srgb, currentColor 38%, transparent);
+	font-size: 1em;
+	font-style: italic;
+	line-height: 1.55;
+	color: inherit;
+	background: transparent;
+}
+
+.qotd-quote-body::before {
+	content: "\201C";
+	font-family: Georgia, "Times New Roman", serif;
+	font-size: 1.35em;
+	font-weight: 700;
+	line-height: 1;
+	opacity: 0.55;
+	margin-right: 0.15rem;
+	vertical-align: -0.08em;
+}
+
+.qotd-quote-body::after {
+	content: "\201D";
+	font-family: Georgia, "Times New Roman", serif;
+	font-size: 1.35em;
+	font-weight: 700;
+	line-height: 1;
+	opacity: 0.55;
+	margin-left: 0.12rem;
+	vertical-align: -0.08em;
+}
+
+.qotd-attribution {
+	display: block;
+	margin: 0 0 0.7rem 0;
+	padding-left: 0.45rem;
+	font-size: 0.9em;
+	font-style: normal;
+	line-height: 1.4;
+	color: inherit;
+	opacity: 0.92;
+}
+
+.qotd-author {
+	font-weight: 600;
+}
+
+.qotd-info {
+	font-style: italic;
+	opacity: 0.85;
+}
+
+.qotd-source-link {
+	display: inline-block;
+	margin-left: 0.35rem;
+	font-size: 0.84em;
+	font-weight: 500;
+	text-decoration: underline;
+	text-underline-offset: 2px;
+	opacity: 0.85;
+	color: inherit;
+}
+
+.qotd-source-link:hover,
+.qotd-source-link:focus {
+	opacity: 1;
+}
+
+.qotd-footer {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.45rem;
+	padding-top: 0.45rem;
+	border-top: 1px solid rgba(128, 128, 128, 0.22);
+}
+
+.qotd-tags {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.3rem;
+}
+
+.qotd-tag {
+	display: inline-flex;
+	align-items: center;
+	padding: 0.14em 0.56em;
+	font-size: 0.76em;
+	font-weight: 500;
+	line-height: 1.35;
+	border-radius: 999px;
+	color: inherit;
+	background: rgba(127, 140, 160, 0.14);
+	border: 1px solid rgba(127, 140, 160, 0.32);
+	letter-spacing: 0.01em;
+	white-space: nowrap;
+	transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.qotd-tag:hover {
+	background: rgba(127, 140, 160, 0.24);
+	border-color: rgba(127, 140, 160, 0.48);
+}
+
+.qotd-next-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.28rem;
+	margin-left: auto;
+	padding: 0.22em 0.68em;
+	font-family: inherit;
+	font-size: 0.8em;
+	font-weight: 600;
+	line-height: 1.35;
+	color: inherit;
+	background: rgba(127, 140, 160, 0.12);
+	border: 1px solid rgba(127, 140, 160, 0.36);
+	border-radius: 6px;
+	cursor: pointer;
+	transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+
+.qotd-next-btn:hover,
+.qotd-next-btn:focus-visible {
+	background: rgba(127, 140, 160, 0.24);
+	border-color: rgba(127, 140, 160, 0.55);
+}
+
+.qotd-next-btn:active {
+	transform: translateY(1px);
+}
+
+.qotd-next-icon {
+	display: inline-block;
+	transition: transform 0.35s ease;
+}
+
+.qotd-widget-wrap.is-loading .qotd-next-icon {
+	transform: rotate(180deg);
+}
