@@ -11,7 +11,7 @@ Originally inspired by the classic e107 `qotd_menu` plugin by **cameron**, compl
 ## Key Features
 
 - **Out-of-the-Box Clean Quote Collections (`quotes/`):**
-  - **`default`** (168 quotes) — Clean, family-friendly, secular general wisdom, science, programming/technology, literature, and humor quotes enabled out of the box.
+  - **`default`** (176 quotes) — Clean, family-friendly, secular general wisdom, science, programming/technology, literature, and humor quotes enabled out of the box.
   - **`spiceworks-wisdom`** (116 quotes) — Classic IT pro, sysadmin, helpdesk, and troubleshooting humor from the Spiceworks community.
   - **Companion Repository Sync ([`scottdd/qotd-collections`](https://github.com/scottdd/qotd-collections)):** One-click sync in Admin pulls the latest `default`, `personal-qotd`, and `spiceworks-wisdom` collections in both structured JSON (`structured/*.json`) and classic BSD/Linux `fortune` (`fortune/*.fortune`) formats.
 - **Structured Metadata & Theme-Inheriting Tag Pills:**
