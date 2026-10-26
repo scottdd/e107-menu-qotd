@@ -1,19 +1,44 @@
 <?php
 /**
- * Quote of the Day (qotd_menu) v2.6.0 — Manager & Sync Helper
+ * Quote of the Day (qotd_menu) v2.6.1 — Manager & Sync Helper
  *
  * @package     qotd_menu
- * @version     2.6.0
+ * @version     2.6.1
  * @author      cameron / Scott Dowlen <https://github.com/scottdd/e107-qotd-menu>
  * @license     GPL-2.0-or-later
  * @note        Imagined by human, built with AI.
  */
 if (!defined('e107_INIT')) { exit; }
 
+$_qotdPluginDir = dirname(__DIR__);
+$_qotdLang = defined('e_LANGUAGE') ? e_LANGUAGE : 'English';
+if (is_readable($_qotdPluginDir . '/languages/' . $_qotdLang . '/' . $_qotdLang . '_front.php'))
+{
+	e107::includeLan($_qotdPluginDir . '/languages/' . $_qotdLang . '/' . $_qotdLang . '_front.php');
+}
+elseif (is_readable($_qotdPluginDir . '/languages/English/English_front.php'))
+{
+	e107::includeLan($_qotdPluginDir . '/languages/English/English_front.php');
+}
+if (is_readable($_qotdPluginDir . '/languages/English/English_front.php'))
+{
+	include_once($_qotdPluginDir . '/languages/English/English_front.php');
+}
+
 class e107_qotd_manager
 {
 	private static $schemaChecked = false;
 	private static $lastSyncStats = null;
+
+	/**
+	 * Return the actual directory name under e107_plugins/ (e.g. 'qotd_menu' or 'e107_qotd_menu').
+	 *
+	 * @return string
+	 */
+	public static function getPluginFolder(): string
+	{
+		return basename(dirname(__DIR__));
+	}
 
 	public static function getLastSyncStats()
 	{
@@ -40,7 +65,7 @@ class e107_qotd_manager
 		}
 
 		return array(
-			'header'         => !empty($pref['qotd_header']) ? (string)$pref['qotd_header'] : 'Quote of the Day',
+			'header'         => !empty($pref['qotd_header']) ? (string)$pref['qotd_header'] : (defined('LAN_QOTD_DEFAULT_HEADER') ? LAN_QOTD_DEFAULT_HEADER : 'Quote of the Day'),
 			'source_mode'    => $sourceMode,
 			'rotation_mode'  => $rotationMode,
 			'collections'    => $collections,
@@ -141,7 +166,7 @@ class e107_qotd_manager
 			$hasOldTypo = (int)$sql->count('qotd', '(*)', "qotd_quote LIKE '%My meory is nearly gone%' OR qotd_quote LIKE '%<i>not</i> making one%' OR qotd_attribution = 'Scott Adams ()' OR qotd_attribution = 'Plato Live, Laugh, Love' OR (qotd_quote LIKE 'An ill-chosen word is the fool%' AND qotd_attribution = '') OR (qotd_quote LIKE 'The wise man never argues with the fool%' AND (qotd_attribution = '' OR qotd_attribution = 'Unknown')) OR (qotd_quote LIKE 'He has read everything%' AND qotd_info = '')");
 			$needSync = ($hasOldTypo > 0);
 			if (!$needSync) {
-				$baseDir = e_PLUGIN . 'qotd_menu/quotes/';
+				$baseDir = dirname(__DIR__) . '/quotes/';
 				if (is_file($baseDir . 'personal-qotd.json')) {
 					$pCount = (int)$sql->count('qotd', '(*)', "qotd_collection = 'personal-qotd'");
 					if ($pCount < 233) {
@@ -192,7 +217,7 @@ class e107_qotd_manager
 		$added = 0;
 		$updated = 0;
 		$skipped = 0;
-		$baseDir = e_PLUGIN . 'qotd_menu/quotes/';
+		$baseDir = dirname(__DIR__) . '/quotes/';
 
 		foreach ($collections as $col) {
 			$col = preg_replace('/[^a-zA-Z0-9_-]/', '', $col);
@@ -314,7 +339,7 @@ class e107_qotd_manager
 		self::ensureSchema();
 		$repo = preg_replace('#[^a-zA-Z0-9_./-]#', '', $repo);
 		$branch = preg_replace('#[^a-zA-Z0-9_.-]#', '', $branch);
-		$baseDir = e_PLUGIN . 'qotd_menu/quotes/';
+		$baseDir = dirname(__DIR__) . '/quotes/';
 		if (!is_dir($baseDir)) {
 			@mkdir($baseDir, 0775, true);
 		}
@@ -328,7 +353,7 @@ class e107_qotd_manager
 			$ctx = stream_context_create(array(
 				'http' => array(
 					'timeout' => 10,
-					'user_agent' => 'e107-qotd-menu/2.6.0 (+https://dowlen.net)',
+					'user_agent' => 'e107-qotd-menu/2.6.1 (+https://dowlen.net)',
 				),
 			));
 			$raw = @file_get_contents($url, false, $ctx);
@@ -383,7 +408,7 @@ class e107_qotd_manager
 			);
 		}
 
-		$baseDir = e_PLUGIN . 'qotd_menu/quotes/';
+		$baseDir = dirname(__DIR__) . '/quotes/';
 		if (!is_dir($baseDir)) {
 			@mkdir($baseDir, 0775, true);
 		}
@@ -441,7 +466,7 @@ class e107_qotd_manager
 	public static function parseQuoteFile(string $relPath): array
 	{
 		$relPath = ltrim(str_replace('..', '', $relPath), '/');
-		$fullPath = e_PLUGIN . 'qotd_menu/' . $relPath;
+		$fullPath = dirname(__DIR__) . '/' . $relPath;
 		if (!is_file($fullPath)) {
 			return array();
 		}
@@ -666,7 +691,7 @@ class e107_qotd_manager
 		$isPinned = !empty($quoteRow['is_pinned']);
 
 		$tags = array_values(array_filter(array_map('trim', explode(',', $tagsRaw))));
-		$ajaxUrl = e_PLUGIN_ABS . 'qotd_menu/qotd_ajax.php';
+		$ajaxUrl = e_PLUGIN_ABS . self::getPluginFolder() . '/qotd_ajax.php';
 
 		$inner = '<figure class="qotd-widget" data-qotd-id="' . $id . '">';
 		if ($isPinned) {
@@ -689,7 +714,7 @@ class e107_qotd_manager
 				$inner .= '<cite class="qotd-info">' . htmlspecialchars($info, ENT_QUOTES, 'UTF-8') . '</cite>';
 			}
 			if ($settings['show_source'] && $url !== '' && preg_match('#^https?://#i', $url)) {
-				$inner .= ' <a class="qotd-source-link" href="' . htmlspecialchars($url, ENT_QUOTES, 'UTF-8') . '" target="_blank" rel="noopener noreferrer" title="View quote source">&#8599; Source</a>';
+				$inner .= ' <a class="qotd-source-link" href="' . htmlspecialchars($url, ENT_QUOTES, 'UTF-8') . '" target="_blank" rel="noopener noreferrer" title="View quote source">&#8599; ' . htmlspecialchars(defined('LAN_QOTD_SOURCE_LINK') ? LAN_QOTD_SOURCE_LINK : 'Source', ENT_QUOTES, 'UTF-8') . '</a>';
 			}
 			$inner .= '</figcaption>';
 		}
@@ -711,7 +736,7 @@ class e107_qotd_manager
 			if ($hasNext) {
 				$inner .= '<button type="button" class="qotd-next-btn" data-qotd-action="next" title="Show another quote">';
 				$inner .= '<span class="qotd-next-icon" aria-hidden="true">&#8635;</span> ';
-				$inner .= '<span class="qotd-next-label">Another Quote</span>';
+				$inner .= '<span class="qotd-next-label">' . htmlspecialchars(defined('LAN_QOTD_ANOTHER_QUOTE') ? LAN_QOTD_ANOTHER_QUOTE : 'Another Quote', ENT_QUOTES, 'UTF-8') . '</span>';
 				$inner .= '</button>';
 			}
 			$inner .= '</div>';

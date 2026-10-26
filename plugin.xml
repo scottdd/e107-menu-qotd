@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<e107Plugin name="Quote of the Day" lan="LAN_PLUGIN_QOTD_NAME" version="2.6.0" date="2026-10-25" compatibility="2.0" installRequired="true">
+<e107Plugin name="Quote of the Day" lan="LAN_PLUGIN_QOTD_NAME" version="2.6.1" date="2026-10-26" compatibility="2.0" installRequired="true">
 	<author name="cameron / Scott Dowlen" url="https://github.com/scottdd/e107-qotd-menu" />
 	<summary lan="LAN_PLUGIN_QOTD_SUMMARY">Quote of the Day widget with structured attributions, topical tags, pinned date ranges, daily or random rotation, and GitHub collection sync.</summary>
 	<description lan="LAN_PLUGIN_QOTD_DESC">Displays a daily or random quote with structured attribution, source context, theme-inheriting tag pills, pinned quote date ranges, an interactive AJAX "Another Quote" button, and dual-format JSON/fortune synchronization with scottdd/qotd-collections. Imagined by human, built with AI.</description>

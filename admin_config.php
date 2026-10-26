@@ -1,9 +1,9 @@
 <?php
 /**
- * Quote of the Day (qotd_menu) v2.6.0 — Admin Configuration UI
+ * Quote of the Day (qotd_menu) v2.6.1 — Admin Configuration UI
  *
  * @package     qotd_menu
- * @version     2.6.0
+ * @version     2.6.1
  * @author      cameron / Scott Dowlen <https://github.com/scottdd/e107-qotd-menu>
  * @license     GPL-2.0-or-later
  * @note        Imagined by human, built with AI.
@@ -15,7 +15,20 @@ if (!getperms('P')) {
 }
 
 require_once(e_ADMIN . 'auth.php');
-require_once(e_PLUGIN . 'qotd_menu/includes/qotd_manager.php');
+require_once(__DIR__ . '/includes/qotd_manager.php');
+$_qotdAdminLang = defined('e_LANGUAGE') ? e_LANGUAGE : 'English';
+if (is_readable(__DIR__ . '/languages/' . $_qotdAdminLang . '/' . $_qotdAdminLang . '_admin.php'))
+{
+	e107::includeLan(__DIR__ . '/languages/' . $_qotdAdminLang . '/' . $_qotdAdminLang . '_admin.php');
+}
+elseif (is_readable(__DIR__ . '/languages/English/English_admin.php'))
+{
+	e107::includeLan(__DIR__ . '/languages/English/English_admin.php');
+}
+if (is_readable(__DIR__ . '/languages/English/English_admin.php'))
+{
+	include_once(__DIR__ . '/languages/English/English_admin.php');
+}
 
 function qotd_menu_render_admin(): void
 {
@@ -505,7 +518,8 @@ if ($activeTab === 'settings') {
 					<td><strong>Quote File Path (File Mode)</strong></td>
 					<td>
 						<select name="qotd_file" class="form-control" style="max-width:420px;">
-							<option value="quotes/personal-qotd.json"' . ($settings['file'] === 'quotes/default.json' ? ' selected' : '') . '>quotes/personal-qotd.json (Structured JSON)</option>
+							<option value="quotes/default.json"' . ($settings['file'] === 'quotes/default.json' ? ' selected' : '') . '>quotes/default.json (Structured JSON)</option>
+							<option value="quotes/personal-qotd.json"' . ($settings['file'] === 'quotes/personal-qotd.json' ? ' selected' : '') . '>quotes/personal-qotd.json (Structured JSON)</option>
 							<option value="quotes/spiceworks-wisdom.json"' . ($settings['file'] === 'quotes/spiceworks-wisdom.json' ? ' selected' : '') . '>quotes/spiceworks-wisdom.json (Structured JSON)</option>
 							<option value="quotes/personal-qotd.fortune"' . ($settings['file'] === 'quotes/personal-qotd.fortune' ? ' selected' : '') . '>quotes/personal-qotd.fortune (Standard Fortune %)</option>
 							<option value="quotes/spiceworks-wisdom.fortune"' . ($settings['file'] === 'quotes/spiceworks-wisdom.fortune' ? ' selected' : '') . '>quotes/spiceworks-wisdom.fortune (Standard Fortune %)</option>
@@ -585,15 +599,15 @@ if ($activeTab === 'sync') {
 	</div>';
 }
 
-	$html .= '<p class="text-muted small" style="margin-top:8px;margin-bottom:0;"><em>Quote of the Day v2.6.0 &mdash; Imagined by human, built with AI.</em></p>';
-	e107::getRender()->tablerender('Quote of the Day (v2.6.0) — Administration', $mes->render() . $html);
+	$html .= '<p class="text-muted small" style="margin-top:8px;margin-bottom:0;"><em>Quote of the Day v2.6.1 &mdash; Imagined by human, built with AI.</em></p>';
+	e107::getRender()->tablerender('Quote of the Day (v2.6.1) — Administration', $mes->render() . $html);
 }
 
 try {
 	qotd_menu_render_admin();
 } catch (\Throwable $e) {
 	e107::getRender()->tablerender(
-		'Quote of the Day (v2.6.0) — Administration Error',
+		'Quote of the Day (v2.6.1) — Administration Error',
 		'<div class="alert alert-danger"><strong>Error loading Quote of the Day Admin:</strong> ' . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8') . '</div>'
 	);
 }

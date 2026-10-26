@@ -1,7 +1,7 @@
 <?php
 define('e_TOKEN_DISABLE', true);
 require_once('../../class2.php');
-require_once(e_PLUGIN . 'qotd_menu/includes/qotd_manager.php');
+require_once(__DIR__ . '/includes/qotd_manager.php');
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');

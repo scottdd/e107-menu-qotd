@@ -8,20 +8,22 @@ define('LAN_PLUGIN_QOTD_DESC', 'Displays a daily or random quote with structured
 if (defined('e_ADMIN_AREA') && e_ADMIN_AREA && class_exists('e107'))
 {
 	(function () {
-		$legacyPhp = dirname(dirname(__DIR__)) . '/plugin.php';
-		if (is_file($legacyPhp) && is_file(dirname(dirname(__DIR__)) . '/plugin.xml'))
+		$pluginDir = dirname(dirname(__DIR__));
+		$folder = basename($pluginDir);
+		$legacyPhp = $pluginDir . '/plugin.php';
+		if (is_file($legacyPhp) && is_file($pluginDir . '/plugin.xml'))
 		{
 			@unlink($legacyPhp);
 		}
 		try
 		{
 			$sql = e107::getDb();
-			if ($sql && $sql->select('plugin', 'plugin_id, plugin_version, plugin_installflag, plugin_category', "plugin_path = 'qotd_menu' LIMIT 1"))
+			if ($sql && $sql->select('plugin', 'plugin_id, plugin_version, plugin_installflag, plugin_category', "plugin_path = '" . $sql->escape($folder) . "' LIMIT 1"))
 			{
 				$row = $sql->fetch();
-				if ($row && ($row['plugin_category'] === 'menu' || ((int)$row['plugin_installflag'] === 0 && $row['plugin_version'] !== '2.6.0')))
+				if ($row && ($row['plugin_category'] === 'menu' || ((int)$row['plugin_installflag'] === 0 && $row['plugin_version'] !== '2.6.1')))
 				{
-					$sql->update('plugin', "plugin_category = 'content', plugin_version = '2.6.0' WHERE plugin_path = 'qotd_menu'");
+					$sql->update('plugin', "plugin_category = 'content', plugin_version = '2.6.1' WHERE plugin_path = '" . $sql->escape($folder) . "'");
 				}
 			}
 		}
