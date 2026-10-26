@@ -21,9 +21,9 @@ if (defined('e_ADMIN_AREA') && e_ADMIN_AREA && class_exists('e107'))
 			if ($sql && $sql->select('plugin', 'plugin_id, plugin_version, plugin_installflag, plugin_category', "plugin_path = '" . $sql->escape($folder) . "' LIMIT 1"))
 			{
 				$row = $sql->fetch();
-				if ($row && ($row['plugin_category'] === 'menu' || ((int)$row['plugin_installflag'] === 0 && $row['plugin_version'] !== '2.6.1')))
+				if ($row && ($row['plugin_category'] === 'menu' || ((int)$row['plugin_installflag'] === 0 && $row['plugin_version'] !== '2.6.2')))
 				{
-					$sql->update('plugin', "plugin_category = 'content', plugin_version = '2.6.1' WHERE plugin_path = '" . $sql->escape($folder) . "'");
+					$sql->update('plugin', "plugin_category = 'content', plugin_version = '2.6.2' WHERE plugin_path = '" . $sql->escape($folder) . "'");
 				}
 			}
 		}

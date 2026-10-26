@@ -1,9 +1,9 @@
 <?php
 /**
- * Quote of the Day (qotd_menu) v2.6.1 — Manager & Sync Helper
+ * Quote of the Day (qotd_menu) v2.6.2 — Manager & Sync Helper
  *
  * @package     qotd_menu
- * @version     2.6.1
+ * @version     2.6.2
  * @author      cameron / Scott Dowlen <https://github.com/scottdd/e107-menu-qotd>
  * @license     GPL-2.0-or-later
  * @note        Imagined by human, built with AI.
@@ -49,8 +49,8 @@ class e107_qotd_manager
 	{
 		$pref = e107::getPref();
 		$sourceMode = isset($pref['qotd_source_mode']) ? (string)$pref['qotd_source_mode'] : '';
-		if ($sourceMode === '') {
-			$sourceMode = (!empty($pref['qotd_table']) || !isset($pref['qotd_table'])) ? 'db' : 'file';
+		if (!in_array($sourceMode, array('db', 'file'), true)) {
+			$sourceMode = 'db';
 		}
 
 		$rotationMode = isset($pref['qotd_rotation_mode']) ? (string)$pref['qotd_rotation_mode'] : 'daily';
@@ -102,7 +102,7 @@ class e107_qotd_manager
 			`qotd_info` varchar(255) NOT NULL default '',
 			`qotd_tags` varchar(255) NOT NULL default '',
 			`qotd_source_url` varchar(255) NOT NULL default '',
-			`qotd_collection` varchar(64) NOT NULL default 'personal-qotd',
+			`qotd_collection` varchar(64) NOT NULL default 'default',
 			`qotd_pin_start` date DEFAULT NULL,
 			`qotd_pin_end` date DEFAULT NULL,
 			`qotd_active` tinyint(1) unsigned NOT NULL default '1',
@@ -151,39 +151,213 @@ class e107_qotd_manager
 			$alterParts[] = "ADD COLUMN `qotd_active` tinyint(1) unsigned NOT NULL default '1'";
 		}
 
+		$schemaUpgraded = false;
 		if (!empty($alterParts)) {
 			$sql->gen("ALTER TABLE `{$table}` " . implode(', ', $alterParts));
-			if (isset($cols['qotd_text'])) {
-				$sql->gen("UPDATE `{$table}` SET `qotd_quote` = `qotd_text`, `qotd_attribution` = IFNULL(`qotd_name`, '') WHERE (`qotd_quote` = '' OR `qotd_quote` IS NULL)");
-			}
+			$schemaUpgraded = true;
 		}
 
-		// Auto-seed bundled collections if table is completely empty, or auto-sync when bundled collections on disk have new quotes/fixes
+		// Preserve and migrate any legacy v2.5 DB rows (qotd_text, qotd_name)
+		if (isset($cols['qotd_text'])) {
+			self::migrateLegacyDbRows();
+		}
+
+		// Auto-seed bundled collections if table is empty, upgraded from legacy v2.5, or missing bundled quotes
 		$count = (int)$sql->count('qotd');
 		if ($count === 0) {
 			self::$lastSyncStats = self::importFromBundled(array('default', 'personal-qotd', 'spiceworks-wisdom'), false);
 		} else {
 			$hasOldTypo = (int)$sql->count('qotd', '(*)', "qotd_quote LIKE '%My meory is nearly gone%' OR qotd_quote LIKE '%<i>not</i> making one%' OR qotd_attribution = 'Scott Adams ()' OR qotd_attribution = 'Plato Live, Laugh, Love' OR (qotd_quote LIKE 'An ill-chosen word is the fool%' AND qotd_attribution = '') OR (qotd_quote LIKE 'The wise man never argues with the fool%' AND (qotd_attribution = '' OR qotd_attribution = 'Unknown')) OR (qotd_quote LIKE 'He has read everything%' AND qotd_info = '')");
-			$needSync = ($hasOldTypo > 0);
-			if (!$needSync) {
-				$baseDir = dirname(__DIR__) . '/quotes/';
-				if (is_file($baseDir . 'personal-qotd.json')) {
-					$pCount = (int)$sql->count('qotd', '(*)', "qotd_collection = 'personal-qotd'");
-					if ($pCount < 233) {
-						$needSync = true;
-					}
+			$needSync = ($schemaUpgraded || $hasOldTypo > 0);
+			$baseDir = dirname(__DIR__) . '/quotes/';
+			if (!$needSync && is_file($baseDir . 'personal-qotd.json')) {
+				$pCount = (int)$sql->count('qotd', '(*)', "qotd_collection = 'personal-qotd'");
+				if ($pCount < 233) {
+					$needSync = true;
 				}
-				if (!$needSync && is_file($baseDir . 'default.json')) {
-					$dCount = (int)$sql->count('qotd', '(*)', "qotd_collection = 'default'");
-					if ($dCount < 176) {
-						$needSync = true;
-					}
+			}
+			if (!$needSync && is_file($baseDir . 'default.json')) {
+				$dCount = (int)$sql->count('qotd', '(*)', "qotd_collection = 'default'");
+				if ($dCount < 176) {
+					$needSync = true;
+				}
+			}
+			if (!$needSync && is_file($baseDir . 'spiceworks-wisdom.json')) {
+				$sCount = (int)$sql->count('qotd', '(*)', "qotd_collection = 'spiceworks-wisdom'");
+				if ($sCount < 116) {
+					$needSync = true;
 				}
 			}
 			if ($needSync) {
 				self::$lastSyncStats = self::importFromBundled(array('default', 'personal-qotd', 'spiceworks-wisdom'), false);
 			}
 		}
+
+		// Preserve and import any pre-existing legacy quote.txt file on disk, then back it up to quote.txt.legacy-bak
+		$legacyQuoteFile = dirname(__DIR__) . '/quote.txt';
+		if (is_file($legacyQuoteFile)) {
+			self::importLegacyQuoteFile($legacyQuoteFile);
+		}
+	}
+
+	/**
+	 * Migrate any legacy v2.5 e107_qotd rows (qotd_text, qotd_name) into the v2.6+ columns
+	 * while preserving custom quotes in the 'default' collection.
+	 */
+	public static function migrateLegacyDbRows(): int
+	{
+		$sql = e107::getDb();
+		$prefix = MPREFIX;
+		$table = $prefix . 'qotd';
+
+		$sql->gen("UPDATE `{$table}` SET
+			`qotd_quote` = `qotd_text`,
+			`qotd_attribution` = IF(`qotd_attribution` = '' OR `qotd_attribution` IS NULL, IFNULL(`qotd_name`, ''), `qotd_attribution`),
+			`qotd_collection` = IF(`qotd_collection` = '' OR `qotd_collection` IS NULL, 'default', `qotd_collection`),
+			`qotd_tags` = IF(`qotd_tags` = '' OR `qotd_tags` IS NULL, 'legacy', `qotd_tags`)
+			WHERE (`qotd_quote` = '' OR `qotd_quote` IS NULL) AND `qotd_text` IS NOT NULL AND `qotd_text` <> ''");
+
+		// Clean up inline attributions (e.g. "Quote - <b>Author</b>") on migrated legacy rows that had an empty qotd_name
+		$legacyRows = $sql->retrieve('qotd', 'qotd_id, qotd_quote, qotd_attribution, qotd_info', "qotd_tags = 'legacy' AND (qotd_attribution = '' OR qotd_quote LIKE '%<b>%' OR qotd_quote LIKE '%<br%')", true);
+		$cleaned = 0;
+		if (is_array($legacyRows)) {
+			foreach ($legacyRows as $r) {
+				$id = (int)($r['qotd_id'] ?? 0);
+				$rawQuote = (string)($r['qotd_quote'] ?? '');
+				$curAttr  = trim((string)($r['qotd_attribution'] ?? ''));
+				$curInfo  = trim((string)($r['qotd_info'] ?? ''));
+				if ($id <= 0 || $rawQuote === '') {
+					continue;
+				}
+				$parsed = self::parseLegacyQuoteLine($rawQuote);
+				$newQuote = $parsed['quote'];
+				$newAttr  = $curAttr !== '' ? $curAttr : $parsed['attribution'];
+				$newInfo  = $curInfo !== '' ? $curInfo : $parsed['info'];
+				if ($newQuote !== $rawQuote || $newAttr !== $curAttr || $newInfo !== $curInfo) {
+					$sql->update('qotd', array(
+						'data' => array(
+							'qotd_quote'       => $newQuote,
+							'qotd_attribution' => substr($newAttr, 0, 150),
+							'qotd_info'        => substr($newInfo, 0, 255),
+						),
+						'WHERE' => 'qotd_id = ' . $id,
+					));
+					$cleaned++;
+				}
+			}
+		}
+		return $cleaned;
+	}
+
+	/**
+	 * Import any unique quotes from a pre-existing legacy quote.txt file into the 'default' collection
+	 * without duplicating existing database rows, and back up quote.txt to quote.txt.legacy-bak.
+	 */
+	public static function importLegacyQuoteFile(string $legacyFile = ''): array
+	{
+		if ($legacyFile === '') {
+			$legacyFile = dirname(__DIR__) . '/quote.txt';
+		}
+		if (!is_file($legacyFile)) {
+			return array('added' => 0, 'skipped' => 0, 'backed_up' => false, 'backup_file' => '');
+		}
+
+		$isAlreadyBackup = (substr($legacyFile, -11) === '.legacy-bak');
+		$backupFile = $isAlreadyBackup ? $legacyFile : ($legacyFile . '.legacy-bak');
+		$markerHash = md5($legacyFile . ':' . (string)@filemtime($legacyFile) . ':' . (string)@filesize($legacyFile));
+		$markerFile = sys_get_temp_dir() . '/e107_qotd_legacy_' . $markerHash . '.done';
+		if (!$isAlreadyBackup && is_file($markerFile)) {
+			if (@copy($legacyFile, $backupFile)) {
+				@unlink($legacyFile);
+			}
+			return array('added' => 0, 'skipped' => 0, 'backed_up' => !is_file($legacyFile), 'backup_file' => $backupFile);
+		}
+
+		$items = self::parseQuoteFilePath($legacyFile);
+		$sql = e107::getDb();
+		$existingNorms = array();
+		if ($sql) {
+			$rows = $sql->retrieve('qotd', 'qotd_id, qotd_quote, qotd_attribution', 'ORDER BY qotd_id ASC', true);
+			if (is_array($rows)) {
+				foreach ($rows as $r) {
+					$qStr = (string)($r['qotd_quote'] ?? '');
+					$aStr = (string)($r['qotd_attribution'] ?? '');
+					$n1 = self::normKey($qStr);
+					$n2 = self::normKey($qStr . ' ' . $aStr);
+					if ($n1 !== '') {
+						$existingNorms[$n1] = true;
+					}
+					if ($n2 !== '') {
+						$existingNorms[$n2] = true;
+					}
+				}
+			}
+		}
+
+		$added = 0;
+		$skipped = 0;
+		foreach ($items as $item) {
+			$q = trim((string)($item['qotd_quote'] ?? ''));
+			if ($q === '') {
+				continue;
+			}
+			$attr = substr(trim((string)($item['qotd_attribution'] ?? '')), 0, 150);
+			$info = substr(trim((string)($item['qotd_info'] ?? '')), 0, 255);
+			$url  = substr(trim((string)($item['qotd_source_url'] ?? '')), 0, 255);
+			$rawLine = (string)($item['_raw_line'] ?? '');
+
+			$norm = self::normKey($q);
+			$normWithAttr = self::normKey($q . ' ' . $attr);
+			$normRaw = $rawLine !== '' ? self::normKey($rawLine) : '';
+
+			if (
+				$norm === '' ||
+				isset($existingNorms[$norm]) ||
+				isset($existingNorms[$normWithAttr]) ||
+				($normRaw !== '' && isset($existingNorms[$normRaw]))
+			) {
+				$skipped++;
+				continue;
+			}
+
+			if ($sql) {
+				$insert = array(
+					'qotd_quote'       => $q,
+					'qotd_attribution' => $attr,
+					'qotd_info'        => $info,
+					'qotd_tags'        => 'legacy',
+					'qotd_source_url'  => $url,
+					'qotd_collection'  => 'default',
+					'qotd_active'      => 1,
+				);
+				if ($sql->insert('qotd', $insert)) {
+					$existingNorms[$norm] = true;
+					$existingNorms[$normWithAttr] = true;
+					if ($normRaw !== '') {
+						$existingNorms[$normRaw] = true;
+					}
+					$added++;
+				}
+			}
+		}
+
+		$backedUp = $isAlreadyBackup;
+		if (!$isAlreadyBackup) {
+			if (@copy($legacyFile, $backupFile)) {
+				@unlink($legacyFile);
+				$backedUp = !is_file($legacyFile) && is_file($backupFile);
+			}
+			if (is_file($legacyFile)) {
+				@file_put_contents($markerFile, date('c'));
+			}
+		}
+
+		return array(
+			'added'       => $added,
+			'skipped'     => $skipped,
+			'backed_up'   => $backedUp,
+			'backup_file' => $backupFile,
+		);
 	}
 
 	public static function importFromBundled(array $collections = array('default', 'personal-qotd', 'spiceworks-wisdom'), bool $replace = false): array
@@ -281,12 +455,12 @@ class e107_qotd_manager
 					continue;
 				}
 
-				// Check if this incoming quote is a typo/spelling fix of an unmatched existing row in the same collection
+				// Check if this incoming quote is a typo/spelling fix of an unmatched existing row in the same collection (excluding custom legacy rows)
 				$bestMatchId = 0;
 				$bestPct = 0.0;
 				if (!empty($existingByCol[$col])) {
 					foreach ($existingByCol[$col] as $candId => $cand) {
-						if (isset($matchedIds[$candId]) || isset($incomingNorms[$cand['_norm']])) {
+						if (isset($matchedIds[$candId]) || isset($incomingNorms[$cand['_norm']]) || (string)($cand['qotd_tags'] ?? '') === 'legacy') {
 							continue;
 						}
 						$pct = 0.0;
@@ -331,6 +505,17 @@ class e107_qotd_manager
 			}
 		}
 
+		// Also import any pre-existing legacy quote.txt or quote.txt.legacy-bak if present
+		$legacyCandidate = dirname(__DIR__) . '/quote.txt';
+		if (!is_file($legacyCandidate) && is_file(dirname(__DIR__) . '/quote.txt.legacy-bak')) {
+			$legacyCandidate = dirname(__DIR__) . '/quote.txt.legacy-bak';
+		}
+		if (is_file($legacyCandidate)) {
+			$legStats = self::importLegacyQuoteFile($legacyCandidate);
+			$added += (int)($legStats['added'] ?? 0);
+			$skipped += (int)($legStats['skipped'] ?? 0);
+		}
+
 		return array('added' => $added, 'updated' => $updated, 'skipped' => $skipped);
 	}
 
@@ -353,7 +538,7 @@ class e107_qotd_manager
 			$ctx = stream_context_create(array(
 				'http' => array(
 					'timeout' => 10,
-					'user_agent' => 'e107-menu-qotd/2.6.1 (+https://dowlen.net)',
+					'user_agent' => 'e107-menu-qotd/2.6.2 (+https://dowlen.net)',
 				),
 			));
 			$raw = @file_get_contents($url, false, $ctx);
@@ -463,10 +648,63 @@ class e107_qotd_manager
 		return $written;
 	}
 
+	/**
+	 * Parse a single legacy 1-line quote entry (supporting both `- <b>Author, Info</b>`
+	 * and plain-text `-- Author` / `- Author` attributions).
+	 */
+	public static function parseLegacyQuoteLine(string $line): array
+	{
+		$line = trim($line);
+		$attr = '';
+		$info = '';
+		$quoteText = $line;
+
+		if (preg_match('#^(.*?)\s+(?:-|—|--|~)\s*<b>(.*?)</b>\s*$#isu', $line, $m)) {
+			$quoteText = trim($m[1]);
+			$attrRaw = trim(strip_tags($m[2]));
+			if (strpos($attrRaw, ',') !== false) {
+				list($attr, $info) = array_map('trim', explode(',', $attrRaw, 2));
+			} else {
+				$attr = $attrRaw;
+			}
+		} elseif (stripos($line, '<br') === false && preg_match('#^(.*?)\s+(?:--|—|~|-)\s+([A-Z][\w\s\.\'\-]{1,60}(?:,\s*[^<>\r\n]{1,80})?)\s*$#u', $line, $m)) {
+			if (substr(trim($m[2]), -1) !== '.') {
+				$quoteText = trim($m[1]);
+				$attrRaw = trim(strip_tags($m[2]));
+				if (strpos($attrRaw, ',') !== false) {
+					list($attr, $info) = array_map('trim', explode(',', $attrRaw, 2));
+				} else {
+					$attr = $attrRaw;
+				}
+			}
+		}
+
+		$quoteText = trim((string)preg_replace('#<br\s*/?>#i', "\n", $quoteText));
+		return array(
+			'quote'       => $quoteText,
+			'attribution' => $attr,
+			'info'        => $info,
+		);
+	}
+
 	public static function parseQuoteFile(string $relPath): array
 	{
 		$relPath = ltrim(str_replace('..', '', $relPath), '/');
 		$fullPath = dirname(__DIR__) . '/' . $relPath;
+		if (!is_file($fullPath)) {
+			if ($relPath === 'quote.txt' && is_file(dirname(__DIR__) . '/quote.txt.legacy-bak')) {
+				$fullPath = dirname(__DIR__) . '/quote.txt.legacy-bak';
+			} elseif ($relPath === 'quote.txt' && is_file(dirname(__DIR__) . '/quotes/default.json')) {
+				$fullPath = dirname(__DIR__) . '/quotes/default.json';
+			} else {
+				return array();
+			}
+		}
+		return self::parseQuoteFilePath($fullPath);
+	}
+
+	private static function parseQuoteFilePath(string $fullPath): array
+	{
 		if (!is_file($fullPath)) {
 			return array();
 		}
@@ -557,28 +795,20 @@ class e107_qotd_manager
 		$out = array();
 		$i = 1;
 		foreach ($lines as $line) {
-			$attr = '';
-			$info = '';
-			$quoteText = $line;
-			if (preg_match('#^(.*?)\s+(?:-|—)\s*<b>(.*?)</b>\s*$#u', $line, $m)) {
-				$quoteText = trim($m[1]);
-				$attrRaw = trim(strip_tags($m[2]));
-				if (strpos($attrRaw, ',') !== false) {
-					list($attr, $info) = array_map('trim', explode(',', $attrRaw, 2));
-				} else {
-					$attr = $attrRaw;
-				}
+			$parsed = self::parseLegacyQuoteLine($line);
+			if ($parsed['quote'] === '') {
+				continue;
 			}
-			$quoteText = str_replace(array('<br />', '<br/>', '<br>'), "\n", $quoteText);
 			$out[] = array(
 				'qotd_id'          => $i++,
-				'qotd_quote'       => $quoteText,
-				'qotd_attribution' => $attr,
-				'qotd_info'        => $info,
-				'qotd_tags'        => 'wisdom',
+				'qotd_quote'       => $parsed['quote'],
+				'qotd_attribution' => $parsed['attribution'],
+				'qotd_info'        => $parsed['info'],
+				'qotd_tags'        => 'legacy',
 				'qotd_source_url'  => '',
-				'qotd_collection'  => 'quote.txt',
+				'qotd_collection'  => 'default',
 				'is_pinned'        => false,
+				'_raw_line'        => $line,
 			);
 		}
 		return $out;
@@ -635,7 +865,7 @@ class e107_qotd_manager
 				'qotd_info'        => '',
 				'qotd_tags'        => '',
 				'qotd_source_url'  => '',
-				'qotd_collection'  => 'personal-qotd',
+				'qotd_collection'  => 'default',
 				'is_pinned'        => false,
 			);
 		}
