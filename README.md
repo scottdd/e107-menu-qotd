@@ -39,18 +39,18 @@ Originally inspired by the classic e107 `qotd_menu` plugin by **cameron**, compl
 ## Installation
 
 > **Important Note on Plugin Folder Name (`qotd_menu`):**
-> - **Recommended:** Download **`qotd_menu_v2.6.1.zip`** from the [Releases page](https://github.com/scottdd/e107-qotd-menu/releases/latest). It is pre-packaged with the required **`qotd_menu/`** folder structure.
-> - **If you use GitHub's green "Code → Download ZIP" button (`e107-qotd-menu-main.zip`) or `git clone`:** You **must** rename the extracted folder inside `e107_plugins/` to **`qotd_menu`** (or `e107_qotd_menu` — **never use hyphens** like `e107-qotd-menu-main`). e107 v2's `e107_handlers/shortcode_handler.php` constructs the PHP shortcode class name directly from the folder name (`<folder>_shortcodes`), and PHP class names cannot contain hyphens (`-`).
+> - **Recommended:** Download **`e107-menu-qotd-v2.6.1.zip`** (or **`qotd_menu_v2.6.1.zip`**) from the [Releases page](https://github.com/scottdd/e107-menu-qotd/releases/latest). It is pre-packaged with the required **`qotd_menu/`** folder structure.
+> - **If you use GitHub's green "Code → Download ZIP" button (`e107-menu-qotd-main.zip`) or `git clone`:** You **must** rename the extracted folder inside `e107_plugins/` to **`qotd_menu`** (or `e107_qotd_menu` — **never use hyphens** like `e107-menu-qotd-main`). e107 v2's `e107_handlers/shortcode_handler.php` constructs the PHP shortcode class name directly from the folder name (`<folder>_shortcodes`), and PHP class names cannot contain hyphens (`-`).
 
 ### Option A: One-Click Upload via e107 Admin (Recommended)
-1. Download **`qotd_menu_v2.6.1.zip`** from the [latest GitHub Release](https://github.com/scottdd/e107-qotd-menu/releases/latest).
-2. In your e107 Admin area, go to **Admin → Plugin Manager → Upload Plugin** and upload `qotd_menu_v2.6.1.zip`.
+1. Download **`e107-menu-qotd-v2.6.1.zip`** (or **`qotd_menu_v2.6.1.zip`**) from the [latest GitHub Release](https://github.com/scottdd/e107-menu-qotd/releases/latest).
+2. In your e107 Admin area, go to **Admin → Plugin Manager → Upload Plugin** and upload the `.zip` archive.
 3. Install **Quote of the Day** (`qotd_menu`) and place `qotd_menu` in **Admin → Menu Manager**.
 
 ### Option B: Clone or Extract into `e107_plugins/`
 ```bash
 cd /path/to/e107/e107_plugins
-git clone https://github.com/scottdd/e107-qotd-menu.git qotd_menu
+git clone https://github.com/scottdd/e107-menu-qotd.git qotd_menu
 ```
 Then visit **Admin → Plugin Manager** to install **Quote of the Day**.
 

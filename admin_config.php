@@ -4,7 +4,7 @@
  *
  * @package     qotd_menu
  * @version     2.6.1
- * @author      cameron / Scott Dowlen <https://github.com/scottdd/e107-qotd-menu>
+ * @author      cameron / Scott Dowlen <https://github.com/scottdd/e107-menu-qotd>
  * @license     GPL-2.0-or-later
  * @note        Imagined by human, built with AI.
  */
