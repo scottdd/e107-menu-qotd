@@ -20,11 +20,18 @@ class qotd_menu_shortcodes extends e_shortcode
 	}
 }
 
-// Support alternate valid PHP identifier folder names (e.g., e107_qotd_menu)
+// 1) Support alternate valid PHP identifier folder names (e.g., e107_qotd_menu)
 // so e107's shortcode_handler.php ($key . '_shortcodes') always resolves the class on PHP 7.4 and PHP 8.x.
 $_qotdFolder = basename(__DIR__);
 $_qotdDynamicClass = preg_replace('/[^a-zA-Z0-9_]/', '_', $_qotdFolder) . '_shortcodes';
 if ($_qotdDynamicClass !== 'qotd_menu_shortcodes' && preg_match('/^[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*$/', $_qotdDynamicClass) && !class_exists($_qotdDynamicClass, false))
 {
 	class_alias('qotd_menu_shortcodes', $_qotdDynamicClass);
+}
+
+// 2) Support hyphenated folder names (e.g., e107-qotd-menu or e107-menu-qotd-main)
+// in e107_handlers/shortcode_handler.php::loadPluginShortcodes() scope before registerClassMethods() runs.
+if (isset($classFunc) && is_string($classFunc) && !class_exists($classFunc, false))
+{
+	$classFunc = 'qotd_menu_shortcodes';
 }

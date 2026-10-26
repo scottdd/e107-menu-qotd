@@ -1,9 +1,9 @@
 <?php
 /**
- * Quote of the Day (qotd_menu) v2.6.2 — Manager & Sync Helper
+ * Quote of the Day (qotd_menu) v2.6.3 — Manager & Sync Helper
  *
  * @package     qotd_menu
- * @version     2.6.2
+ * @version     2.6.3
  * @author      cameron / Scott Dowlen <https://github.com/scottdd/e107-menu-qotd>
  * @license     GPL-2.0-or-later
  * @note        Imagined by human, built with AI.
@@ -538,7 +538,7 @@ class e107_qotd_manager
 			$ctx = stream_context_create(array(
 				'http' => array(
 					'timeout' => 10,
-					'user_agent' => 'e107-menu-qotd/2.6.2 (+https://dowlen.net)',
+					'user_agent' => 'e107-menu-qotd/2.6.3 (+https://dowlen.net)',
 				),
 			));
 			$raw = @file_get_contents($url, false, $ctx);

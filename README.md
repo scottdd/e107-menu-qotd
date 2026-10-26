@@ -1,4 +1,4 @@
-# e107 Quote of the Day (`qotd_menu`) v2.6.2
+# e107 Quote of the Day (`qotd_menu`) v2.6.3
 
 A modernized **Quote of the Day** plugin for **e107 v2.3+** (compatible with **PHP 7.4 through PHP 8.4+**) with structured attributions, topical tag pills, pinned date ranges, deterministic daily or random page-load rotation, interactive AJAX **"↻ Another Quote"** button, and one-click GitHub collection sync.
 
@@ -40,11 +40,11 @@ Originally inspired by the classic e107 `qotd_menu` plugin by **cameron**, compl
 ## Installation
 
 > **Important Note on Plugin Folder Name (`qotd_menu`):**
-> - **Recommended:** Download **`e107-menu-qotd-v2.6.2.zip`** (or **`qotd_menu_v2.6.2.zip`**) from the [Releases page](https://github.com/scottdd/e107-menu-qotd/releases/latest). It is pre-packaged with the required **`qotd_menu/`** folder structure.
+> - **Recommended:** Download **`e107-menu-qotd-v2.6.3.zip`** (or **`qotd_menu_v2.6.3.zip`**) from the [Releases page](https://github.com/scottdd/e107-menu-qotd/releases/latest). It is pre-packaged with the required **`qotd_menu/`** folder structure.
 > - **If you use GitHub's green "Code → Download ZIP" button (`e107-menu-qotd-main.zip`) or `git clone`:** You **must** rename the extracted folder inside `e107_plugins/` to **`qotd_menu`** (or `e107_qotd_menu` — **never use hyphens** like `e107-menu-qotd-main`). e107 v2's `e107_handlers/shortcode_handler.php` constructs the PHP shortcode class name directly from the folder name (`<folder>_shortcodes`), and PHP class names cannot contain hyphens (`-`).
 
 ### Option A: One-Click Upload via e107 Admin (Recommended)
-1. Download **`e107-menu-qotd-v2.6.2.zip`** (or **`qotd_menu_v2.6.2.zip`**) from the [latest GitHub Release](https://github.com/scottdd/e107-menu-qotd/releases/latest).
+1. Download **`e107-menu-qotd-v2.6.3.zip`** (or **`qotd_menu_v2.6.3.zip`**) from the [latest GitHub Release](https://github.com/scottdd/e107-menu-qotd/releases/latest).
 2. In your e107 Admin area, go to **Admin → Plugin Manager → Upload Plugin** and upload the `.zip` archive.
 3. Install **Quote of the Day** (`qotd_menu`) and place `qotd_menu` in **Admin → Menu Manager**.
 
@@ -65,6 +65,9 @@ All bundled and optional quote collections are maintained in structured JSON and
 ---
 
 ## Changelog
+
+### v2.6.3 (2026-10-26)
+- **Hyphenated Folder Resilience in `e_shortcode.php`:** Added `$classFunc = 'qotd_menu_shortcodes'` fallback in `e_parse_shortcode::loadPluginShortcodes()` scope so extracting a hyphenated folder (`e107-qotd-menu` or `e107-menu-qotd-main`) cannot trigger a fatal `TypeError` in `get_class_methods()` on PHP 8.0–8.4+.
 
 ### v2.6.2 (2026-10-26)
 - **Non-Destructive Legacy `quote.txt` Protection:** Removed root `quote.txt` from the release archive so extracting over a legacy `qotd_menu` v2.5 folder never overwrites pre-existing flat-file quotes.

@@ -1,9 +1,9 @@
 <?php
 /**
- * Quote of the Day (qotd_menu) v2.6.2 — Admin Configuration UI
+ * Quote of the Day (qotd_menu) v2.6.3 — Admin Configuration UI
  *
  * @package     qotd_menu
- * @version     2.6.2
+ * @version     2.6.3
  * @author      cameron / Scott Dowlen <https://github.com/scottdd/e107-menu-qotd>
  * @license     GPL-2.0-or-later
  * @note        Imagined by human, built with AI.
@@ -599,15 +599,15 @@ if ($activeTab === 'sync') {
 	</div>';
 }
 
-	$html .= '<p class="text-muted small" style="margin-top:8px;margin-bottom:0;"><em>Quote of the Day v2.6.2 &mdash; Imagined by human, built with AI.</em></p>';
-	e107::getRender()->tablerender('Quote of the Day (v2.6.2) — Administration', $mes->render() . $html);
+	$html .= '<p class="text-muted small" style="margin-top:8px;margin-bottom:0;"><em>Quote of the Day v2.6.3 &mdash; Imagined by human, built with AI.</em></p>';
+	e107::getRender()->tablerender('Quote of the Day (v2.6.3) — Administration', $mes->render() . $html);
 }
 
 try {
 	qotd_menu_render_admin();
 } catch (\Throwable $e) {
 	e107::getRender()->tablerender(
-		'Quote of the Day (v2.6.2) — Administration Error',
+		'Quote of the Day (v2.6.3) — Administration Error',
 		'<div class="alert alert-danger"><strong>Error loading Quote of the Day Admin:</strong> ' . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8') . '</div>'
 	);
 }
