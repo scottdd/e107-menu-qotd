@@ -138,7 +138,7 @@ class e107_qotd_manager
 		if ($count === 0) {
 			self::$lastSyncStats = self::importFromBundled(array('default', 'personal-qotd', 'spiceworks-wisdom'), false);
 		} else {
-			$hasOldTypo = (int)$sql->count('qotd', '(*)', "qotd_quote LIKE '%My meory is nearly gone%' OR qotd_quote LIKE '%<i>not</i> making one%' OR qotd_attribution = 'Scott Adams ()' OR qotd_attribution = 'Plato Live, Laugh, Love'");
+			$hasOldTypo = (int)$sql->count('qotd', '(*)', "qotd_quote LIKE '%My meory is nearly gone%' OR qotd_quote LIKE '%<i>not</i> making one%' OR qotd_attribution = 'Scott Adams ()' OR qotd_attribution = 'Plato Live, Laugh, Love' OR (qotd_quote LIKE 'An ill-chosen word is the fool%' AND qotd_attribution = '')");
 			$needSync = ($hasOldTypo > 0);
 			if (!$needSync) {
 				$baseDir = e_PLUGIN . 'qotd_menu/quotes/';
