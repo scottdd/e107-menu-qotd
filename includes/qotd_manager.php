@@ -13,6 +13,12 @@ if (!defined('e107_INIT')) { exit; }
 class e107_qotd_manager
 {
 	private static $schemaChecked = false;
+	private static $lastSyncStats = null;
+
+	public static function getLastSyncStats()
+	{
+		return self::$lastSyncStats;
+	}
 
 	public static function getSettings(): array
 	{
@@ -127,14 +133,30 @@ class e107_qotd_manager
 			}
 		}
 
-		// Auto-seed bundled collections if table is completely empty, or auto-heal known pre-fix typos
+		// Auto-seed bundled collections if table is completely empty, or auto-sync when bundled collections on disk have new quotes/fixes
 		$count = (int)$sql->count('qotd');
 		if ($count === 0) {
-			self::importFromBundled(array('default', 'personal-qotd', 'spiceworks-wisdom'), false);
+			self::$lastSyncStats = self::importFromBundled(array('default', 'personal-qotd', 'spiceworks-wisdom'), false);
 		} else {
-			$hasOldTypo = (int)$sql->count('qotd', '(*)', "qotd_quote LIKE '%My meory is nearly gone%' OR qotd_attribution = 'Scott Adams ()' OR qotd_attribution = 'Plato Live, Laugh, Love'");
-			if ($hasOldTypo > 0) {
-				self::importFromBundled(array('default', 'personal-qotd', 'spiceworks-wisdom'), false);
+			$hasOldTypo = (int)$sql->count('qotd', '(*)', "qotd_quote LIKE '%My meory is nearly gone%' OR qotd_quote LIKE '%<i>not</i> making one%' OR qotd_attribution = 'Scott Adams ()' OR qotd_attribution = 'Plato Live, Laugh, Love'");
+			$needSync = ($hasOldTypo > 0);
+			if (!$needSync) {
+				$baseDir = e_PLUGIN . 'qotd_menu/quotes/';
+				if (is_file($baseDir . 'personal-qotd.json')) {
+					$pCount = (int)$sql->count('qotd', '(*)', "qotd_collection = 'personal-qotd'");
+					if ($pCount < 233) {
+						$needSync = true;
+					}
+				}
+				if (!$needSync && is_file($baseDir . 'default.json')) {
+					$dCount = (int)$sql->count('qotd', '(*)', "qotd_collection = 'default'");
+					if ($dCount < 176) {
+						$needSync = true;
+					}
+				}
+			}
+			if ($needSync) {
+				self::$lastSyncStats = self::importFromBundled(array('default', 'personal-qotd', 'spiceworks-wisdom'), false);
 			}
 		}
 	}
